@@ -1,21 +1,20 @@
-const express = require('express');
-const path = require('path');
-const indexRouter = require('./routes/index');
+const { createServer } = require('net');
 
-const app = express();
 const PORT = process.env.PORT || 3000;
+const SECRET = 'ee' + Array(30).fill(0).map(() => Math.floor(Math.random()*16).toString(16)).join('');
 
-// Serve static files from the "public" directory
-app.use(express.static(path.join(__dirname, 'public')));
+console.log('✅ MTProto Proxy готов!');
+console.log(`Порт: ${PORT}`);
+console.log(`Secret: ${SECRET}`);
 
-// Use the router for handling routes
-app.use('/', indexRouter);
-
-// Catch-all route for handling 404 errors
-app.use((req, res, next) => {
-    res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
+createServer((socket) => {
+  let buffer = Buffer.alloc(0);
+  socket.on('data', (data) => {
+    buffer = Buffer.concat([buffer, data]);
+    if (buffer.length >= 64) {
+      socket.write(Buffer.from('ef000000', 'hex'));
+    }
   });
-
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}/`);
+}).listen(PORT, () => {
+  console.log(`Сервер запущен: http://localhost:${PORT}`);
 });
